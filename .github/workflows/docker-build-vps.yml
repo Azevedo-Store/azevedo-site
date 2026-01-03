@@ -17,6 +17,10 @@ jobs:
     name: Build Docker Image on VPS
     runs-on: ubuntu-latest
     
+    # Definir permissões mínimas necessárias para o GITHUB_TOKEN
+    permissions:
+      contents: read  # Para fazer checkout do código
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
