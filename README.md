@@ -6,13 +6,28 @@ Projeto Next.js 16 com React 19 e Prisma 6.
 
 Este projeto está configurado com GitHub Actions para fazer deploy automático em um servidor VPS usando Docker.
 
-### Documentação completa
+### Guias de Deploy
 
-Consulte [DOCKER_DEPLOY.md](./DOCKER_DEPLOY.md) para instruções detalhadas sobre:
-- Configuração dos secrets do GitHub
-- Preparação do servidor VPS
-- Personalização do workflow
-- Solução de problemas
+- 📖 **[GUIA_RAPIDO.md](./GUIA_RAPIDO.md)** - Guia rápido para começar (RECOMENDADO)
+- 📚 **[DOCKER_DEPLOY.md](./DOCKER_DEPLOY.md)** - Documentação completa e detalhada
+- 🛠️ **setup-vps.sh** - Script automático de setup do VPS
+
+### Quick Start
+
+1. **No VPS**, execute o script de setup:
+   ```bash
+   wget https://raw.githubusercontent.com/DevGabLow/azevedo-site/main/setup-vps.sh
+   bash setup-vps.sh
+   ```
+
+2. **No GitHub**, configure os secrets (Settings → Secrets):
+   - `VPS_SSH_KEY` - Chave privada SSH
+   - `VPS_HOST` - IP do servidor
+   - `VPS_USER` - Usuário SSH
+   - `VPS_PATH` - Caminho do projeto
+   - `DATABASE_URL` - Connection string do banco
+
+3. **Push para main** e veja o deploy acontecer automaticamente! 🎉
 
 ## 🏃 Desenvolvimento Local
 

@@ -92,6 +92,25 @@ O GitHub Action é acionado automaticamente quando:
 
 ## 📦 Preparando o VPS
 
+### Opção 1: Setup Automático (Recomendado)
+
+Execute o script de setup que automatiza todo o processo:
+
+```bash
+# Download e execução do script
+wget https://raw.githubusercontent.com/DevGabLow/azevedo-site/main/setup-vps.sh
+bash setup-vps.sh
+```
+
+O script irá:
+- Instalar Docker e Git (se necessário)
+- Clonar o repositório
+- Configurar SSH
+- Criar arquivo .env
+- Configurar Git
+
+### Opção 2: Setup Manual
+
 ### 1. Instalar Docker (se ainda não instalado)
 
 ```bash
