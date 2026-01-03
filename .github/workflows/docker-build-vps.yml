@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-on-vps:
-    name: Build Docker Image on VPS
+    name: Build and Deploy Docker Image
     runs-on: ubuntu-latest
     
     # Definir permissões mínimas necessárias para o GITHUB_TOKEN
@@ -32,67 +32,90 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
       
-      - name: Deploy and Build on VPS
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PATH: ${{ secrets.VPS_PATH }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NODE_ENV: ${{ secrets.NODE_ENV || 'production' }}
-          NEXT_TELEMETRY_DISABLED: ${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-          API_KEY: ${{ secrets.API_KEY }}
+      - name: Create .env file
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
-            set -e
-            
-            # Navegar para o diretório do projeto no VPS
-            cd ${{ secrets.VPS_PATH }}
-            
-            # Fazer pull das últimas mudanças
-            git fetch origin
-            git reset --hard origin/main || git reset --hard origin/master
-            
-            # Criar arquivo .env a partir dos secrets do GitHub
-            echo "Creating .env file from GitHub secrets..."
-            cat > .env << 'ENVEOF'
+          cat > .env << 'ENVEOF'
           DATABASE_URL="${{ secrets.DATABASE_URL }}"
           NODE_ENV="${{ secrets.NODE_ENV || 'production' }}"
           NEXT_TELEMETRY_DISABLED="${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}"
           ENVEOF
+          
+          # Adicionar secrets opcionais se estiverem definidos
+          if [ -n "${{ secrets.NEXTAUTH_SECRET }}" ]; then
+            echo 'NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"' >> .env
+          fi
+          
+          if [ -n "${{ secrets.NEXTAUTH_URL }}" ]; then
+            echo 'NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"' >> .env
+          fi
+          
+          if [ -n "${{ secrets.API_KEY }}" ]; then
+            echo 'API_KEY="${{ secrets.API_KEY }}"' >> .env
+          fi
+      
+      - name: Build Docker Image
+        run: |
+          docker build -t azevedo-site:${{ github.sha }} -t azevedo-site:latest .
+      
+      - name: Save and Transfer Docker Image
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}
+          REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
+        run: |
+          # Criar tarball da imagem
+          docker save azevedo-site:latest | gzip > azevedo-site.tar.gz
+          
+          # Transferir imagem e .env para o VPS
+          scp -i ~/.ssh/id_rsa azevedo-site.tar.gz $VPS_USER@$VPS_HOST:/tmp/
+          scp -i ~/.ssh/id_rsa .env $VPS_USER@$VPS_HOST:/tmp/
+      
+      - name: Deploy on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}
+          REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
+        run: |
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+            set -e
             
-            # Adicionar secrets opcionais se estiverem definidos
-            if [ -n "${{ secrets.NEXTAUTH_SECRET }}" ]; then
-              echo 'NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"' >> .env
-            fi
+            # Navegar para o diretório do projeto
+            cd ${{ secrets.VPS_PATH }}
             
-            if [ -n "${{ secrets.NEXTAUTH_URL }}" ]; then
-              echo 'NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"' >> .env
-            fi
+            # Carregar a imagem do tarball
+            echo "Loading Docker image..."
+            docker load < /tmp/azevedo-site.tar.gz
             
-            if [ -n "${{ secrets.API_KEY }}" ]; then
-              echo 'API_KEY="${{ secrets.API_KEY }}"' >> .env
-            fi
+            # Taguear para o registry local
+            REGISTRY="${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}:${{ secrets.REGISTRY_PORT || '5000' }}"
+            docker tag azevedo-site:latest $REGISTRY/azevedo-site:latest
+            docker tag azevedo-site:latest $REGISTRY/azevedo-site:${{ github.sha }}
             
-            echo "✓ .env file created successfully"
+            # Push para o registry
+            echo "Pushing to registry $REGISTRY..."
+            docker push $REGISTRY/azevedo-site:latest
+            docker push $REGISTRY/azevedo-site:${{ github.sha }}
             
-            # Build da imagem Docker
-            docker build -t azevedo-site:latest .
+            # Mover .env para o diretório do projeto
+            mv /tmp/.env .env
             
-            # Opcional: Parar e remover container antigo
+            # Parar e remover container antigo
             docker stop azevedo-site-container || true
             docker rm azevedo-site-container || true
             
-            # Executar novo container usando --env-file
+            # Pull da imagem do registry e executar novo container
+            docker pull $REGISTRY/azevedo-site:latest
             docker run -d \
               --name azevedo-site-container \
               -p 3000:3000 \
               --env-file .env \
               --restart unless-stopped \
-              azevedo-site:latest
+              $REGISTRY/azevedo-site:latest
             
-            # Executar migrations do Prisma (se necessário)
+            # Executar migrations do Prisma
             echo "Running Prisma migrations..."
             if docker exec azevedo-site-container npx prisma migrate deploy; then
               echo "✓ Migrations completed successfully"
@@ -100,7 +123,8 @@ jobs:
               echo "⚠ Warning: Migrations failed or no migrations to run"
             fi
             
-            # Limpar imagens antigas não utilizadas
+            # Limpar arquivos temporários e imagens antigas
+            rm -f /tmp/azevedo-site.tar.gz /tmp/.env
             docker image prune -f
           EOF
       

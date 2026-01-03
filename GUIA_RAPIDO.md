@@ -14,14 +14,18 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Clonar o repositório
-cd /home/seu-usuario
-git clone https://github.com/DevGabLow/azevedo-site.git
-cd azevedo-site
+# Configurar Docker Registry
+docker volume create registry-data
+docker run -d \
+  -p 5000:5000 \
+  --name registry \
+  --restart unless-stopped \
+  -v registry-data:/var/lib/registry \
+  registry:2
 
-# Criar arquivo .env com suas configurações
-cp .env.example .env
-nano .env  # Edite com suas configurações
+# Criar diretório do projeto
+mkdir -p /home/seu-usuario/azevedo-site
+cd /home/seu-usuario/azevedo-site
 ```
 
 ### 2. No seu computador local:

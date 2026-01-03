@@ -26,42 +26,46 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │              RUNNER DO GITHUB ACTIONS                            │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │  Setup SSH                                                 │ │
-│  │  • Cria ~/.ssh/id_rsa com VPS_SSH_KEY                     │ │
-│  │  • Configura known_hosts com VPS_HOST                     │ │
+│  │  Build Docker Image                                        │ │
+│  │  • docker build -t azevedo-site:latest                     │ │
+│  │  • Multi-stage build (deps → builder → runner)             │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Save and Transfer                                         │ │
+│  │  • docker save azevedo-site:latest | gzip                  │ │
+│  │  • scp imagem + .env para VPS                             │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
-                      │ 2. SSH Connection
+                      │ 3. Transfer via SCP
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     SERVIDOR VPS                                 │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │  Deploy and Build                                          │ │
+│  │  Deploy on VPS                                             │ │
 │  │                                                            │ │
 │  │  cd $VPS_PATH                                             │ │
 │  │    │                                                       │ │
-│  │    ├─► git pull origin main                               │ │
+│  │    ├─► docker load < /tmp/azevedo-site.tar.gz             │ │
 │  │    │                                                       │ │
-│  │    ├─► Criar .env a partir dos secrets do GitHub          │ │
-│  │    │     (DATABASE_URL, NODE_ENV, NEXTAUTH_SECRET, etc)   │ │
+│  │    ├─► docker tag → REGISTRY_HOST:REGISTRY_PORT           │ │
 │  │    │                                                       │ │
-│  │    ├─► docker build -t azevedo-site:latest .              │ │
-│  │    │     │                                                 │ │
-│  │    │     ├─► Stage 1: Instalar dependências (npm ci)      │ │
-│  │    │     ├─► Stage 2: Build Next.js (npm run build)       │ │
-│  │    │     └─► Stage 3: Imagem de produção (otimizada)      │ │
+│  │    ├─► docker push para registry local                    │ │
+│  │    │                                                       │ │
+│  │    ├─► mv /tmp/.env para diretório do projeto             │ │
 │  │    │                                                       │ │
 │  │    ├─► docker stop azevedo-site-container (se existir)    │ │
 │  │    │                                                       │ │
 │  │    ├─► docker rm azevedo-site-container (se existir)      │ │
 │  │    │                                                       │ │
+│  │    ├─► docker pull do registry local                      │ │
+│  │    │                                                       │ │
 │  │    ├─► docker run -d                                      │ │
 │  │    │     --name azevedo-site-container                    │ │
 │  │    │     -p 3000:3000                                     │ │
 │  │    │     --env-file .env                                  │ │
-│  │    │     azevedo-site:latest                             │ │
+│  │    │     REGISTRY/azevedo-site:latest                    │ │
 │  │    │                                                       │ │
 │  │    ├─► docker exec azevedo-site-container                 │ │
 │  │    │     npx prisma migrate deploy                        │ │
@@ -116,6 +120,8 @@ SECRETS NECESSÁRIOS (GitHub):
   VPS_HOST      → IP ou domínio do servidor (ex: 123.456.789.10)
   VPS_USER      → Usuário SSH (ex: ubuntu, root)
   VPS_PATH      → Caminho do projeto (ex: /home/ubuntu/azevedo-site)
+  REGISTRY_HOST → Host do registry (opcional, padrão: VPS_HOST)
+  REGISTRY_PORT → Porta do registry (opcional, padrão: 5000)
   DATABASE_URL  → Connection string do banco de dados
   
   Opcionais (adicionados ao .env se configurados):

@@ -60,6 +60,16 @@ O caminho completo onde o repositório está clonado no VPS.
 
 **Exemplo:** `/home/azevedo/azevedo-site` ou `/var/www/azevedo-site`
 
+#### `REGISTRY_HOST` (Opcional)
+O endereço do Docker Registry no VPS. Se não configurado, usa o mesmo valor de `VPS_HOST`.
+
+**Exemplo:** `localhost` ou `registry.seudominio.com`
+
+#### `REGISTRY_PORT` (Opcional)
+A porta do Docker Registry. Padrão: `5000`
+
+**Exemplo:** `5000` ou `5001`
+
 #### `DATABASE_URL` (Obrigatório)
 A URL de conexão com o banco de dados para o Prisma.
 
@@ -96,20 +106,44 @@ O GitHub Action é acionado automaticamente quando:
 
 1. **Checkout**: Baixa o código do repositório
 2. **Setup SSH**: Configura a conexão SSH com o VPS
-3. **Deploy and Build**: 
-   - Conecta ao VPS via SSH
-   - Navega para o diretório do projeto
-   - Faz pull das últimas mudanças
-   - **Cria arquivo `.env` automaticamente usando secrets do GitHub**
-   - Builda a imagem Docker (multi-stage build otimizado para Next.js)
-   - Para e remove o container antigo (se existir)
-   - Inicia um novo container com a imagem atualizada usando `--env-file .env`
-   - Executa migrations do Prisma (se aplicável)
-   - Limpa imagens Docker antigas
-4. **Verify**: Verifica se o container está rodando
-5. **Cleanup**: Remove arquivos SSH temporários
+3. **Create .env**: Cria arquivo `.env` localmente usando secrets do GitHub
+4. **Build Docker Image**: Builda a imagem Docker no GitHub Actions
+5. **Save and Transfer**: 
+   - Salva a imagem como tarball compactado
+   - Transfere imagem e .env para o VPS via SCP
+6. **Deploy on VPS**: 
+   - Carrega a imagem no Docker do VPS
+   - Tagueia e faz push para o registry local
+   - Move .env para o diretório do projeto
+   - Para e remove o container antigo
+   - Faz pull da imagem do registry
+   - Inicia novo container usando `--env-file .env`
+   - Executa migrations do Prisma
+   - Limpa arquivos temporários e imagens antigas
+7. **Verify**: Verifica se o container está rodando
+8. **Cleanup**: Remove arquivos SSH temporários
 
 ## 📦 Preparando o VPS
+
+### Pré-requisito: Docker Registry
+
+O VPS deve ter um Docker Registry rodando. Se ainda não tiver, configure com:
+
+```bash
+# Criar volume para o registry
+docker volume create registry-data
+
+# Executar registry
+docker run -d \
+  -p 5000:5000 \
+  --name registry \
+  --restart unless-stopped \
+  -v registry-data:/var/lib/registry \
+  registry:2
+
+# Verificar se está rodando
+docker ps | grep registry
+```
 
 ### Opção 1: Setup Automático (Recomendado)
 
