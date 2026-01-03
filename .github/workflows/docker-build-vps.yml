@@ -41,7 +41,8 @@ jobs:
             cd ${{ secrets.VPS_PATH }}
             
             # Fazer pull das últimas mudanças
-            git pull origin main || git pull origin master
+            git fetch origin
+            git reset --hard origin/main || git reset --hard origin/master
             
             # Build da imagem Docker
             docker build -t azevedo-site:latest .
@@ -55,13 +56,18 @@ jobs:
             docker run -d \
               --name azevedo-site-container \
               -p 3000:3000 \
-              -e DATABASE_URL="${DATABASE_URL}" \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e NODE_ENV=production \
               --restart unless-stopped \
               azevedo-site:latest
             
             # Executar migrations do Prisma (se necessário)
-            docker exec azevedo-site-container npx prisma migrate deploy || true
+            echo "Running Prisma migrations..."
+            if docker exec azevedo-site-container npx prisma migrate deploy; then
+              echo "✓ Migrations completed successfully"
+            else
+              echo "⚠ Warning: Migrations failed or no migrations to run"
+            fi
             
             # Limpar imagens antigas não utilizadas
             docker image prune -f

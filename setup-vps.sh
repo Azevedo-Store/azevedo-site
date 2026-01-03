@@ -39,11 +39,19 @@ sudo apt-get update -qq
 # Instalar Docker se não estiver instalado
 if ! command -v docker &> /dev/null; then
     print_info "Instalando Docker..."
+    # Download do script
     curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh get-docker.sh
-    sudo usermod -aG docker $USER
-    rm get-docker.sh
-    print_success "Docker instalado"
+    # Verificar se o download foi bem sucedido
+    if [ -f get-docker.sh ]; then
+        sudo sh get-docker.sh
+        sudo usermod -aG docker $USER
+        rm get-docker.sh
+        print_success "Docker instalado"
+    else
+        print_error "Falha ao baixar script de instalação do Docker"
+        print_info "Instale manualmente: https://docs.docker.com/engine/install/"
+        exit 1
+    fi
 else
     print_success "Docker já instalado"
 fi
@@ -124,7 +132,8 @@ echo "   nano ~/.ssh/authorized_keys"
 echo ""
 echo "3. Configure os secrets no GitHub:"
 echo "   VPS_SSH_KEY = (sua chave privada)"
-echo "   VPS_HOST = $(curl -s ifconfig.me)"
+PUBLIC_IP_FOR_SECRETS=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || echo "SEU_IP_AQUI")
+echo "   VPS_HOST = $PUBLIC_IP_FOR_SECRETS"
 echo "   VPS_USER = $USER"
 echo "   VPS_PATH = $INSTALL_DIR"
 echo "   DATABASE_URL = (sua connection string)"
@@ -136,7 +145,12 @@ echo "   cd $INSTALL_DIR"
 echo "   docker build -t azevedo-site ."
 echo "   docker run -p 3000:3000 --env-file .env azevedo-site"
 echo ""
-print_info "IP público deste servidor: $(curl -s ifconfig.me)"
+print_info "IP público deste servidor (se disponível):"
+PUBLIC_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || echo "Não foi possível determinar automaticamente")
+echo "   $PUBLIC_IP"
+if [ "$PUBLIC_IP" = "Não foi possível determinar automaticamente" ]; then
+    print_info "Execute 'curl ifconfig.me' ou 'ip addr' para ver o IP manualmente"
+fi
 echo ""
 
 # Se Docker foi recém instalado, avisar sobre logout
