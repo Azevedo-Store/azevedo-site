@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: azevedo-site-container
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      # Adicione outras variáveis de ambiente necessárias
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - azevedo-network
+
+  # Opcional: Banco de dados PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: azevedo-db
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-azevedo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - azevedo-network
+
+volumes:
+  postgres_data:
+
+networks:
+  azevedo-network:
+    driver: bridge
