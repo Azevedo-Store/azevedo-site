@@ -44,6 +44,9 @@
 │  │    │                                                       │ │
 │  │    ├─► git pull origin main                               │ │
 │  │    │                                                       │ │
+│  │    ├─► Criar .env a partir dos secrets do GitHub          │ │
+│  │    │     (DATABASE_URL, NODE_ENV, NEXTAUTH_SECRET, etc)   │ │
+│  │    │                                                       │ │
 │  │    ├─► docker build -t azevedo-site:latest .              │ │
 │  │    │     │                                                 │ │
 │  │    │     ├─► Stage 1: Instalar dependências (npm ci)      │ │
@@ -57,8 +60,7 @@
 │  │    ├─► docker run -d                                      │ │
 │  │    │     --name azevedo-site-container                    │ │
 │  │    │     -p 3000:3000                                     │ │
-│  │    │     -e DATABASE_URL="..."                           │ │
-│  │    │     -e NODE_ENV=production                          │ │
+│  │    │     --env-file .env                                  │ │
 │  │    │     azevedo-site:latest                             │ │
 │  │    │                                                       │ │
 │  │    ├─► docker exec azevedo-site-container                 │ │
@@ -115,6 +117,13 @@ SECRETS NECESSÁRIOS (GitHub):
   VPS_USER      → Usuário SSH (ex: ubuntu, root)
   VPS_PATH      → Caminho do projeto (ex: /home/ubuntu/azevedo-site)
   DATABASE_URL  → Connection string do banco de dados
+  
+  Opcionais (adicionados ao .env se configurados):
+  NODE_ENV              → Ambiente (padrão: production)
+  NEXT_TELEMETRY_DISABLED → Desabilitar telemetria (padrão: 1)
+  NEXTAUTH_SECRET       → Secret do NextAuth
+  NEXTAUTH_URL          → URL base do NextAuth
+  API_KEY               → Chave de API customizada
 
 ═══════════════════════════════════════════════════════════════════
 

@@ -50,6 +50,13 @@ Adicione estes secrets:
 | `VPS_USER` | Usuário SSH do VPS | `ubuntu` ou `root` |
 | `VPS_PATH` | Caminho do projeto no VPS | `/home/ubuntu/azevedo-site` |
 | `DATABASE_URL` | URL do banco de dados | `postgresql://user:pass@host:5432/db` |
+| `NODE_ENV` | Ambiente (opcional) | `production` (padrão) |
+| `NEXT_TELEMETRY_DISABLED` | Desabilitar telemetria (opcional) | `1` (padrão) |
+| `NEXTAUTH_SECRET` | Secret NextAuth (opcional) | `sua-chave-secreta` |
+| `NEXTAUTH_URL` | URL NextAuth (opcional) | `http://localhost:3000` |
+| `API_KEY` | Chave API (opcional) | `sua-api-key` |
+
+**Nota:** O workflow cria automaticamente um arquivo `.env` no VPS com todos os secrets configurados.
 
 ## 🚀 Usando o Deploy Automático
 

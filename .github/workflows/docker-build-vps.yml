@@ -37,6 +37,12 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NODE_ENV: ${{ secrets.NODE_ENV || 'production' }}
+          NEXT_TELEMETRY_DISABLED: ${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
         run: |
           ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
             set -e
@@ -48,6 +54,29 @@ jobs:
             git fetch origin
             git reset --hard origin/main || git reset --hard origin/master
             
+            # Criar arquivo .env a partir dos secrets do GitHub
+            echo "Creating .env file from GitHub secrets..."
+            cat > .env << 'ENVEOF'
+          DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          NODE_ENV="${{ secrets.NODE_ENV || 'production' }}"
+          NEXT_TELEMETRY_DISABLED="${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}"
+          ENVEOF
+            
+            # Adicionar secrets opcionais se estiverem definidos
+            if [ -n "${{ secrets.NEXTAUTH_SECRET }}" ]; then
+              echo 'NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"' >> .env
+            fi
+            
+            if [ -n "${{ secrets.NEXTAUTH_URL }}" ]; then
+              echo 'NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"' >> .env
+            fi
+            
+            if [ -n "${{ secrets.API_KEY }}" ]; then
+              echo 'API_KEY="${{ secrets.API_KEY }}"' >> .env
+            fi
+            
+            echo "✓ .env file created successfully"
+            
             # Build da imagem Docker
             docker build -t azevedo-site:latest .
             
@@ -55,13 +84,11 @@ jobs:
             docker stop azevedo-site-container || true
             docker rm azevedo-site-container || true
             
-            # Executar novo container
-            # IMPORTANTE: Configure DATABASE_URL nos secrets do GitHub
+            # Executar novo container usando --env-file
             docker run -d \
               --name azevedo-site-container \
               -p 3000:3000 \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e NODE_ENV=production \
+              --env-file .env \
               --restart unless-stopped \
               azevedo-site:latest
             

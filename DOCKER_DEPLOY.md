@@ -60,12 +60,30 @@ O caminho completo onde o repositório está clonado no VPS.
 
 **Exemplo:** `/home/azevedo/azevedo-site` ou `/var/www/azevedo-site`
 
-#### `DATABASE_URL` (Opcional mas recomendado)
+#### `DATABASE_URL` (Obrigatório)
 A URL de conexão com o banco de dados para o Prisma.
 
 **Exemplo:** `postgresql://usuario:senha@localhost:5432/azevedo_db`
 
-**Nota:** Se preferir, pode configurar a DATABASE_URL diretamente no VPS através de um arquivo `.env` ou variável de ambiente do sistema.
+#### `NODE_ENV` (Opcional)
+Ambiente de execução da aplicação. Padrão: `production`
+
+**Exemplo:** `production` ou `development`
+
+#### `NEXT_TELEMETRY_DISABLED` (Opcional)
+Desabilita telemetria do Next.js. Padrão: `1`
+
+**Exemplo:** `1` (desabilitado) ou `0` (habilitado)
+
+#### Secrets Opcionais:
+
+Os seguintes secrets são opcionais e serão adicionados ao `.env` apenas se configurados:
+
+- **`NEXTAUTH_SECRET`**: Chave secreta para NextAuth.js
+- **`NEXTAUTH_URL`**: URL base da aplicação para NextAuth.js
+- **`API_KEY`**: Chave de API customizada
+
+**Nota:** O workflow cria automaticamente um arquivo `.env` no VPS a partir desses secrets durante o deploy.
 
 ## 🚀 Como funciona o Workflow
 
@@ -82,9 +100,10 @@ O GitHub Action é acionado automaticamente quando:
    - Conecta ao VPS via SSH
    - Navega para o diretório do projeto
    - Faz pull das últimas mudanças
+   - **Cria arquivo `.env` automaticamente usando secrets do GitHub**
    - Builda a imagem Docker (multi-stage build otimizado para Next.js)
    - Para e remove o container antigo (se existir)
-   - Inicia um novo container com a imagem atualizada
+   - Inicia um novo container com a imagem atualizada usando `--env-file .env`
    - Executa migrations do Prisma (se aplicável)
    - Limpa imagens Docker antigas
 4. **Verify**: Verifica se o container está rodando
