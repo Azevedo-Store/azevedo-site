@@ -53,30 +53,83 @@ Adicione estes secrets:
 | `VPS_HOST` | IP ou domínio do VPS | `123.456.789.10` |
 | `VPS_USER` | Usuário SSH do VPS | `ubuntu` ou `root` |
 | `VPS_PATH` | Caminho do projeto no VPS | `/home/ubuntu/azevedo-site` |
-| `DATABASE_URL` | URL do banco de dados | `postgresql://user:pass@host:5432/db` |
+| `DATABASE_URL` | URL do banco de dados (PRD) | `postgresql://user:pass@host:5432/db` |
+
+**Secrets Opcionais:**
+
+| Nome | Valor | Exemplo |
+|------|-------|---------|
 | `NODE_ENV` | Ambiente (opcional) | `production` (padrão) |
 | `NEXT_TELEMETRY_DISABLED` | Desabilitar telemetria (opcional) | `1` (padrão) |
 | `NEXTAUTH_SECRET` | Secret NextAuth (opcional) | `sua-chave-secreta` |
 | `NEXTAUTH_URL` | URL NextAuth (opcional) | `http://localhost:3000` |
 | `API_KEY` | Chave API (opcional) | `sua-api-key` |
 
+**Secrets para Ambiente DEV (Opcionais):**
+
+Se você quiser usar ambientes separados (DEV e PRD), configure também:
+
+| Nome | Valor | Descrição |
+|------|-------|-----------|
+| `DATABASE_URL_DEV` | URL do banco DEV | Se não configurado, usa `DATABASE_URL` |
+| `API_KEY_DEV` | API Key DEV | Se não configurado, usa `API_KEY` |
+| `NEXTAUTH_SECRET_DEV` | NextAuth secret DEV | Se não configurado, usa `NEXTAUTH_SECRET` |
+| `NEXTAUTH_URL_DEV` | NextAuth URL DEV | Se não configurado, usa `NEXTAUTH_URL` |
+
 **Nota:** O workflow cria automaticamente um arquivo `.env` no VPS com todos os secrets configurados.
 
 ## 🚀 Usando o Deploy Automático
 
-### Opção 1: Push automático
+### Opção 1: Push automático (PRD)
 ```bash
 git add .
 git commit -m "Minha alteração"
 git push origin main
 ```
-✅ O GitHub Actions vai automaticamente fazer o deploy!
+✅ O GitHub Actions vai automaticamente fazer build e deploy em **PRODUÇÃO (porta 3000)**!
 
-### Opção 2: Manual
+### Opção 2: Manual com opções personalizadas
+
 1. Vá em **Actions** no GitHub
 2. Selecione **Build Docker on VPS**
 3. Clique em **Run workflow**
-4. Selecione a branch e clique em **Run workflow**
+4. Escolha as opções:
+   - **Branch**: Selecione a branch desejada
+   - **Tipo de ação**:
+     - `build-and-deploy`: Faz build E deploy (padrão)
+     - `build-only`: Apenas build e push para registry (sem deploy)
+   - **Ambiente**:
+     - `PRD`: Produção - porta 3000, container `azevedo-site-container` (padrão)
+     - `DEV`: Desenvolvimento - porta 3001, container `azevedo-site-container-dev`
+5. Clique em **Run workflow**
+
+### Exemplos de Uso
+
+**Fazer build e deploy em PRODUÇÃO:**
+- Branch: Escolha a branch desejada (ex: `main`, `develop`, etc.)
+- Tipo de ação: `build-and-deploy`
+- Ambiente: `PRD`
+- Resultado: Container rodando na porta 3000 com código da branch selecionada
+
+**Fazer build e deploy em DESENVOLVIMENTO:**
+- Branch: Escolha a branch desejada (ex: `develop`, `feature/nova-funcionalidade`, etc.)
+- Tipo de ação: `build-and-deploy`
+- Ambiente: `DEV`
+- Resultado: Container rodando na porta 3001 com código da branch selecionada
+
+**Apenas fazer build (sem atualizar containers):**
+- Branch: Escolha a branch desejada
+- Tipo de ação: `build-only`
+- Ambiente: `PRD` ou `DEV`
+- Resultado: Imagem atualizada no registry, containers não são alterados
+
+### O que o workflow faz SEMPRE:
+
+✅ Utiliza a branch selecionada na Action para o build  
+✅ Faz checkout e pull da branch específica no VPS  
+✅ Faz build da imagem Docker da branch selecionada  
+✅ Faz push para o Registry local no VPS  
+✅ Limpa imagens Docker antigas (mais de 24h)
 
 ## 📊 Acompanhar o Deploy
 
@@ -87,14 +140,23 @@ git push origin main
 ## ✅ Verificar se funcionou
 
 ```bash
-# No VPS
-docker ps  # Deve mostrar azevedo-site-container rodando
+# No VPS - Container de PRODUÇÃO
+docker ps | grep azevedo-site-container  # Deve mostrar container rodando na porta 3000
 
-# Ver logs
+# Ver logs - PRODUÇÃO
 docker logs azevedo-site-container
 
-# Testar a aplicação
+# Testar a aplicação - PRODUÇÃO
 curl http://localhost:3000
+
+# No VPS - Container de DESENVOLVIMENTO (se configurado)
+docker ps | grep azevedo-site-container-dev  # Deve mostrar container rodando na porta 3001
+
+# Ver logs - DESENVOLVIMENTO
+docker logs azevedo-site-container-dev
+
+# Testar a aplicação - DESENVOLVIMENTO
+curl http://localhost:3001
 ```
 
 ## 🔧 Comandos Úteis no VPS
