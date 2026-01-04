@@ -43,7 +43,7 @@ Para ativar completamente as proteções, configure o seguinte no GitHub:
 1. Vá em **Settings** → **Environments** → **New environment**
 2. Nome do environment: `production`
 3. Configure **Environment protection rules**:
-   - ✅ **Required reviewers**: Adicione `DevGabLow`
+   - ✅ **Required reviewers**: Adicione `@DevGabLow`
    - ✅ **Wait timer**: 0 minutos (ou configure um delay se preferir)
    - (Opcional) **Deployment branches**: Apenas `main`
 
@@ -78,7 +78,7 @@ Após configurar os environments no GitHub, verifique:
 - [ ] Branch protection rule está ativa para `main` com "Require review from Code Owners"
 - [ ] Environment `production` está criado com required reviewers
 - [ ] Testar: fazer PR com mudança em workflow - deve exigir aprovação de @DevGabLow
-- [ ] Testar: fazer deploy para PRD - deve exigir aprovação de @DevGabLow
+- [ ] Testar: fazer deploy para PRD (environment `production`) - deve exigir aprovação de @DevGabLow
 
 ## 🧪 Como Testar
 
@@ -86,10 +86,10 @@ Após configurar os environments no GitHub, verifique:
 1. Criar uma branch de teste
 2. Modificar qualquer arquivo em `.github/workflows/`
 3. Abrir PR
-4. Verificar que o PR mostra "Review required from DevGabLow"
+4. Verificar que o PR mostra "Review required from @DevGabLow"
 
 ### Testar Proteção de Deploy:
-1. Fazer push para `main` ou executar workflow manualmente para PRD
+1. Fazer push para `main` ou executar workflow manualmente selecionando PRD (usa environment `production`)
 2. Workflow deve pausar no job de deploy
 3. Em Actions → Workflow run, deve aparecer "Waiting for approval"
 4. @DevGabLow deve aprovar ou rejeitar o deploy

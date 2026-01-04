@@ -174,8 +174,9 @@ jobs:
       github.event.inputs.action_type != 'build-only'
     
     # Requer aprovação para deploys de PRD
+    # DEV → 'development' (sem aprovação), PRD/push → 'production' (requer aprovação)
     environment:
-      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'DEV' && 'development' || 'production' }}
+      name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'DEV') && 'development' || 'production' }}
     
     permissions:
       contents: read
