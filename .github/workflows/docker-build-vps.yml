@@ -96,28 +96,44 @@ jobs:
             docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Configurar registry como insecure (HTTP) se necessário
-            REGISTRY_ENTRY="\"$REGISTRY_HOST:$REGISTRY_PORT\""
-            if ! grep -q "$REGISTRY_ENTRY" /etc/docker/daemon.json 2>/dev/null; then
-              echo "Configuring Docker to allow insecure registry $REGISTRY_HOST:$REGISTRY_PORT..."
+            REGISTRY_ADDR="$REGISTRY_HOST:$REGISTRY_PORT"
+            
+            # Verificar se já está configurado
+            if [ -f /etc/docker/daemon.json ] && grep -q "\"$REGISTRY_ADDR\"" /etc/docker/daemon.json 2>/dev/null; then
+              echo "Registry $REGISTRY_ADDR already configured as insecure"
+            else
+              echo "Configuring Docker to allow insecure registry $REGISTRY_ADDR..."
               
-              # Criar ou atualizar daemon.json
-              if [ -f /etc/docker/daemon.json ]; then
-                # Arquivo existe, adicionar ao array de insecure-registries
-                sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
-                if grep -q "insecure-registries" /etc/docker/daemon.json; then
-                  # Adicionar ao array existente
-                  sudo sed -i "s/\"insecure-registries\": \[/\"insecure-registries\": [$REGISTRY_ENTRY, /" /etc/docker/daemon.json
-                else
-                  # Adicionar nova chave insecure-registries
-                  sudo sed -i "s/{/{\"insecure-registries\": [$REGISTRY_ENTRY],/" /etc/docker/daemon.json
-                fi
-              else
-                # Criar novo arquivo
-                sudo mkdir -p /etc/docker
-                echo "{\"insecure-registries\": [$REGISTRY_ENTRY]}" | sudo tee /etc/docker/daemon.json > /dev/null
-              fi
+              # Usar Python para manipular JSON de forma segura
+              sudo python3 -c "
+import json
+import os
+
+daemon_json_path = '/etc/docker/daemon.json'
+config = {}
+
+# Ler configuração existente se houver
+if os.path.exists(daemon_json_path):
+    with open(daemon_json_path, 'r') as f:
+        config = json.load(f)
+    # Fazer backup
+    with open(daemon_json_path + '.bak', 'w') as f:
+        json.dump(config, f, indent=2)
+
+# Adicionar registry à lista de insecure-registries
+if 'insecure-registries' not in config:
+    config['insecure-registries'] = []
+
+if '$REGISTRY_ADDR' not in config['insecure-registries']:
+    config['insecure-registries'].append('$REGISTRY_ADDR')
+
+# Salvar configuração
+os.makedirs(os.path.dirname(daemon_json_path), exist_ok=True)
+with open(daemon_json_path, 'w') as f:
+    json.dump(config, f, indent=2)
+"
               
-              # Reiniciar Docker apenas se configuração mudou
+              # Reiniciar Docker
               sudo systemctl restart docker || sudo service docker restart
               echo "Waiting for Docker to restart..."
               sleep 5
