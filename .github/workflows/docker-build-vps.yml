@@ -71,11 +71,12 @@ jobs:
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             NODE_ENV=${{ secrets.NODE_ENV || 'production' }}     
           fi
-          
+          NEXT_TELEMETRY_DISABLED="${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}"
+
           cat > .env << ENVEOF
           DATABASE_URL="${DATABASE_URL}"
           NODE_ENV="${NODE_ENV}"
-          NEXT_TELEMETRY_DISABLED="${{ secrets.NEXT_TELEMETRY_DISABLED || '1' }}"
+          NEXT_TELEMETRY_DISABLED="${NEXT_TELEMETRY_DISABLED}"
           ENVEOF
           
           # Adicionar secrets opcionais se estiverem definidos
