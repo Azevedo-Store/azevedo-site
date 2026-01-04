@@ -250,9 +250,14 @@ jobs:
             # Navegar para o diretório do projeto
             cd $VPS_PATH
             
-            # Parar e remover container antigo
-            sudo docker stop $CONTAINER_NAME || true
-            sudo docker rm $CONTAINER_NAME || true
+            # Parar e remover container antigo (se existir)
+            if sudo docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}\\$"; then
+              echo "Stopping existing container: $CONTAINER_NAME"
+              sudo docker stop $CONTAINER_NAME || true
+              sudo docker rm $CONTAINER_NAME || true
+            else
+              echo "No existing container found: $CONTAINER_NAME"
+            fi
             
             # Pull da imagem do registry e executar novo container
             sudo docker pull \$REGISTRY/azevedo-site:latest
