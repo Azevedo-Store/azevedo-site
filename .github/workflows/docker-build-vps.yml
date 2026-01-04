@@ -78,26 +78,39 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
           REGISTRY_HOST: ${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}
           REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "bash -s" << EOF
             set -e
             
             # Navegar para o diretório do projeto
-            cd ${{ secrets.VPS_PATH }}
+            cd "$VPS_PATH"
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
             docker load < /tmp/azevedo-site.tar.gz
             
             # Taguear para o registry local
-            REGISTRY="${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}:${{ secrets.REGISTRY_PORT || '5000' }}"
-            docker tag azevedo-site:latest $REGISTRY/azevedo-site:latest
-            docker tag azevedo-site:latest $REGISTRY/azevedo-site:${{ github.sha }}
+            REGISTRY="$REGISTRY_HOST:$REGISTRY_PORT"
+            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:latest
+            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
+            
+            # Configurar registry como insecure (HTTP) se necessário
+            if ! grep -q "\"insecure-registries\"" /etc/docker/daemon.json 2>/dev/null; then
+              echo "Configuring Docker to allow insecure registry..."
+              sudo mkdir -p /etc/docker
+              echo '{
+                "insecure-registries": ["'"\$REGISTRY"'"]
+              }' | sudo tee /etc/docker/daemon.json > /dev/null
+              sudo systemctl restart docker || sudo service docker restart
+              # Aguardar Docker reiniciar
+              sleep 5
+            fi
             
             # Push para o registry
-            echo "Pushing to registry $REGISTRY..."
-            docker push $REGISTRY/azevedo-site:latest
-            docker push $REGISTRY/azevedo-site:${{ github.sha }}
+            echo "Pushing to registry \$REGISTRY..."
+            docker push \$REGISTRY/azevedo-site:latest
+            docker push \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Mover .env para o diretório do projeto
             mv /tmp/.env .env
@@ -107,13 +120,13 @@ jobs:
             docker rm azevedo-site-container || true
             
             # Pull da imagem do registry e executar novo container
-            docker pull $REGISTRY/azevedo-site:latest
+            docker pull \$REGISTRY/azevedo-site:latest
             docker run -d \
               --name azevedo-site-container \
               -p 3000:3000 \
               --env-file .env \
               --restart unless-stopped \
-              $REGISTRY/azevedo-site:latest
+              \$REGISTRY/azevedo-site:latest
             
             # Executar migrations do Prisma
             echo "Running Prisma migrations..."
@@ -133,9 +146,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
-            docker ps | grep azevedo-site-container
-          EOF
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "docker ps | grep azevedo-site-container"
       
       - name: Cleanup SSH
         if: always()
