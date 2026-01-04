@@ -96,14 +96,30 @@ jobs:
             docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Configurar registry como insecure (HTTP) se necessário
-            if ! grep -q "\"insecure-registries\"" /etc/docker/daemon.json 2>/dev/null; then
-              echo "Configuring Docker to allow insecure registry..."
-              sudo mkdir -p /etc/docker
-              echo '{
-                "insecure-registries": ["'"\$REGISTRY"'"]
-              }' | sudo tee /etc/docker/daemon.json > /dev/null
+            REGISTRY_ENTRY="\"$REGISTRY_HOST:$REGISTRY_PORT\""
+            if ! grep -q "$REGISTRY_ENTRY" /etc/docker/daemon.json 2>/dev/null; then
+              echo "Configuring Docker to allow insecure registry $REGISTRY_HOST:$REGISTRY_PORT..."
+              
+              # Criar ou atualizar daemon.json
+              if [ -f /etc/docker/daemon.json ]; then
+                # Arquivo existe, adicionar ao array de insecure-registries
+                sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+                if grep -q "insecure-registries" /etc/docker/daemon.json; then
+                  # Adicionar ao array existente
+                  sudo sed -i "s/\"insecure-registries\": \[/\"insecure-registries\": [$REGISTRY_ENTRY, /" /etc/docker/daemon.json
+                else
+                  # Adicionar nova chave insecure-registries
+                  sudo sed -i "s/{/{\"insecure-registries\": [$REGISTRY_ENTRY],/" /etc/docker/daemon.json
+                fi
+              else
+                # Criar novo arquivo
+                sudo mkdir -p /etc/docker
+                echo "{\"insecure-registries\": [$REGISTRY_ENTRY]}" | sudo tee /etc/docker/daemon.json > /dev/null
+              fi
+              
+              # Reiniciar Docker apenas se configuração mudou
               sudo systemctl restart docker || sudo service docker restart
-              # Aguardar Docker reiniciar
+              echo "Waiting for Docker to restart..."
               sleep 5
             fi
             
