@@ -1,0 +1,38 @@
+.content {
+    display: flex;
+
+    &.d_center {
+        justify-content: center;
+    }
+
+    &.d_column {
+        flex-direction: column;
+    }
+}
+
+.itens_content {
+    display: flex;
+    gap: 16px;
+    justify-items: center;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10%;
+    flex-wrap: wrap;
+    padding: 2rem;
+}
+
+.itens_content>* {
+    box-sizing: border-box;
+}
+
+
+
+@media (max-width: 576px) {
+    .itens_content {
+        margin-top: 0;
+        padding: 1rem;
+        .MuiButtonBase-root{
+            width: 100%!important;
+        }
+    }
+}

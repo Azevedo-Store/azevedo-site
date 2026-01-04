@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
+
+
+
+
+.footer {
+    display: flex;
+    justify-content: space-evenly;
+    /* Mantém o espaçamento entre os elementos */
+    align-items: flex-end;
+    /* Centraliza verticalmente */
+    flex-wrap: wrap;
+    background: linear-gradient(180deg, rgba(44, 151, 217, 1) 0%, rgba(21, 73, 140, 1) 100%);
+    padding: 24px;
+    color: white;
+}
+
+.link_portfolio {
+    display: flex;
+    justify-content: center;
+    background: #15498c;
+    padding: 5px 0;
+}
+
+.link_portfolio h5{
+    color: rgb(155, 155, 155);
+
+}
+
+.container_footer {
+    display: flex;
+    justify-content: space-between;
+    /* Mantém o espaçamento entre os elementos */
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0;
+    padding-top: 0;
+    
+}
+
+.footer_text {
+    color: #0C2546;
+    font-family: "Russo One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    text-align:start;
+    /* Centraliza o texto */
+}
+
+.footer_left {
+    display: flex;
+    align-items: start;
+    /* Alinha o conteúdo centralizado verticalmente */
+    justify-content: flex-start;
+    /* Alinha o conteúdo à esquerda */
+    flex: 1;
+    gap: 20px;
+    /* Adiciona espaçamento entre as seções de pagamento e contato */
+}
+
+.footer_left>div {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    /* Centraliza os itens dentro do div */
+}
+
+.footer_right {
+    display: flex;
+    align-items: center;
+    /* Alinha o conteúdo centralizado verticalmente */
+    justify-content: flex-end;
+    /* Alinha o conteúdo à direita */
+    flex: 1;
+    
+}
+
+.footer_contato {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding-bottom: 36px;
+}
+
+
+
+/* Estilo específico para a imagem */
+.img_footer {
+    max-width: 100%;
+    height: auto;
+    
+}
+
+.img_footer_logo{
+    width: 30%;
+}
+
+.footer_right .img_footer_logo {
+    margin-left: 0;
+    /* Adiciona espaço entre o logo e as frases da esquerda */
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 600px) {
+    .footer {
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+    }
+
+    .container_footer {
+        flex-direction: column;
+        /* Altera a direção do flex para coluna */
+        align-items: center;
+        /* Centraliza o conteúdo em telas menores */
+        
+        
+        font-size: 14px;
+    }
+
+        .img_footer {
+            max-width: 75%;}
+
+    .footer_text {
+        font-size: 14px;
+        /* Ajusta o tamanho da fonte */
+        text-align: center;
+        /* Centraliza o texto em telas menores */
+    }
+
+    .footer_contato {
+        font-size: 14px;
+        text-align: center;
+        padding-bottom: 10px;
+        /* Centraliza o texto de contato em telas menores */
+    }
+
+    .link_portfolio {
+        width: 100%;
+        padding: 10px;
+        position: relative;
+        top: 0;
+    }
+
+    .footer_left {
+        flex-direction: column;
+        /* Empilha "Formas de pagamento" e "Contato" verticalmente */
+        align-items: center;
+        /* Centraliza os itens */
+        text-align: center;
+        /* Centraliza o texto */
+        width: 100%;
+        /* Ocupa a largura total */
+    }
+    .footer_left>div{
+        align-items: center;
+    }
+    .footer_right {
+        align-items: center;
+        /* Centraliza o conteúdo em telas menores */
+        text-align: center;
+        /* Centraliza o texto */
+        width: 100%;
+        /* Ocupa a largura total */
+    }
+
+    .img_footer_logo {
+        display: none;
+    }
+}

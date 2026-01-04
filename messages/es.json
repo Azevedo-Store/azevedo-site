@@ -1,0 +1,30 @@
+{
+    "static": {
+        "time_open": "Horario de atención"
+    },
+    "home": {
+        "navBar": {
+            "home": "Inicio",
+            "seller_your_itens": "Vende tus zenys/artículos",
+            "our_references": "Nuestras referencias",
+            "contact": "Contacto"
+        },
+        "zeny_seller": {
+            "btn_buy": "Comprar",
+            "currency_desc": "dolares"
+        }
+    },
+    "footer": {
+        "payment_method": "Métodos de pago",
+        "contact": "Contacto"
+    },
+    "buy_without_limit": {
+        "obs": "Pedido mínimo de ",
+        "buy_no_limit": "Compra la cantidad de zeny que desees:",
+        "total_amount": "Monto total",
+        "actual_amount_server": "Valor actual en el servidor",
+        "server_want_buy": "Servidor donde deseas comprar",
+        "add_quantity": "Agregar cantidad",
+        "btn_finish_whatsapp": "Finalizar en Whatsapp"
+    }
+}
