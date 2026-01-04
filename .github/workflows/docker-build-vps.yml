@@ -235,10 +235,10 @@ jobs:
         run: |
           # Determinar container e porta com base no ambiente
           if [ "$ENVIRONMENT" == "DEV" ]; then
-            CONTAINER_NAME="azevedo-site-container-dev"
+            CONTAINER_NAME="azevedo-site-dev"
             PORT="3001"
           else
-            CONTAINER_NAME="azevedo-site-container"
+            CONTAINER_NAME="azevedo-site"
             PORT="3000"
           fi
           
@@ -278,7 +278,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           ENVIRONMENT: ${{ steps.env.outputs.environment }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "sudo docker ps | grep azevedo-site-container"
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "sudo docker ps | grep azevedo-site"
       
       - name: Cleanup SSH
         if: always()
