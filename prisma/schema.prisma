@@ -1,0 +1,127 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Menu {
+  id         Int         @id @default(autoincrement())
+  title      String
+  slug       String      @unique
+  created_at DateTime    @default(now())
+  ordem      Int         @default(9999)
+  enabled    Boolean     @default(false)
+  deleted    Boolean     @default(false)
+  MenuItens  MenuItens[]
+  sub_menus  Sub_Menu[]
+}
+
+model Sub_Menu {
+  id             Int            @id @default(autoincrement())
+  title          String
+  slug           String         @unique
+  created_at     DateTime       @default(now())
+  menuId         Int
+  sub_menu_itens SubMenuItens[]
+  menu           Menu           @relation(fields: [menuId], references: [id])
+}
+
+model MenuItens {
+  menuId  Int
+  itensId Int
+  Itens   Itens @relation(fields: [itensId], references: [id])
+  menu    Menu  @relation(fields: [menuId], references: [id])
+
+  @@id([itensId, menuId])
+}
+
+model SubMenuItens {
+  subMenuId Int
+  itensId   Int
+  Itens     Itens    @relation(fields: [itensId], references: [id])
+  sub_menus Sub_Menu @relation(fields: [subMenuId], references: [id])
+
+  @@id([itensId, subMenuId])
+}
+
+model Itens {
+  id             Int            @id @default(autoincrement())
+  name           String
+  slug           String         @unique
+  description    String
+  value          Decimal
+  menuId         Int
+  subMenuId      Int
+  enabled        Boolean        @default(false)
+  deleted        Boolean        @default(false)
+  ordem          Int            @default(9999)
+  image_itens    ImagesItens[]
+  menu_itens     MenuItens[]
+  sub_menu_itens SubMenuItens[]
+}
+
+model Images {
+  id          Int           @id @default(autoincrement())
+  name        String
+  url         String
+  description String?
+  image_itens ImagesItens[]
+}
+
+model ImagesItens {
+  imageId Int
+  itensId Int
+  image   Images @relation(fields: [imageId], references: [id])
+  Itens   Itens  @relation(fields: [itensId], references: [id])
+
+  @@id([itensId, imageId])
+}
+
+model Tenant {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  VendaHome   VendaHome[]
+}
+
+model VendaHome {
+  id          Int     @id @default(autoincrement())
+  description String
+  value       Decimal
+  server      String
+  enabled     Boolean @default(false)
+  deleted     Boolean @default(false)
+  ordem       Int     @default(9999)
+  tenantId    Int     @default(1)
+  tenant      Tenant  @relation(fields: [tenantId], references: [id])
+}
+
+model Config {
+  key   String @id
+  value String
+}
+
+
+// beta models
+// model pages{
+//   id         Int      @id @default(autoincrement())
+//   title      String
+//   slug       String   @unique
+//   content    String
+//   created_at DateTime @default(now())
+//   updated_at DateTime @updatedAt
+//   enabled    Boolean  @default(false)
+//   deleted    Boolean  @default(false)
+//   ordem      Int      @default(9999)
+// }
+
+// model page_components{
+//   pageId Int
+//   itensId Int
+//   pages   pages @relation(fields: [pageId], references: [id])
+//   @@id([pageId])
+// }

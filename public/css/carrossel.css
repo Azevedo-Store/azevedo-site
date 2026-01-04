@@ -1,0 +1,113 @@
+/* Swiper */
+.swiper {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0px;
+    
+    
+    
+    
+    
+    
+}
+
+.swiper-wrapper {
+    display: flex;
+    transition: transform 0.3s ease;
+    
+}
+
+.swiper-slide {
+    width: 300px;
+        /* largura fixa */
+    height: 400px;
+        /* altura fixa */
+    flex-shrink: 0;
+    box-sizing: border-box;
+    background-color: #f4f4f4;
+    /* Espaço entre slides */
+}
+
+.swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Para preencher o espaço do contêiner */
+}
+
+/* Estilo para a paginação */
+.swiper-pagination {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Estilo para os botões de navegação */
+.swiper-button-prev,
+.swiper-button-next {
+    position: absolute;
+    top: 27.5%;
+    transform: translateY(-50%);
+    background-color: transparent;
+    cursor: pointer;
+    z-index: 9;
+    transition: background-color 0.3s ease;
+}
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+    cursor: url('../assets/Icones/Hand.png'), auto;
+}
+
+.swiper-button-prev {
+    
+    left: 10px;
+}
+
+.swiper-button-next {
+    
+    right: 10px;
+}
+
+.button_nav{
+    height: 45px;
+    width: 45px;
+    background-color: transparent;
+}
+.prev{
+    transform: rotate(180deg);
+}
+
+#cr_mobile{
+    display: none;
+}
+
+
+
+@media (max-width: 600px){
+    .swiper-slide {
+            width: 150px;
+            /* largura fixa */
+            height: 200px;
+            /* altura fixa */
+    }
+
+    .swiper-button-prev,
+    .swiper-button-next{
+        display: none;
+    }
+
+    .button_nav {
+        height: 30px;
+        width: 30px;
+        background-color: transparent;
+    }
+
+    #cr_mobile{
+        display: block;
+    }
+    #cr_desktop{
+        display: none;
+    }
+}

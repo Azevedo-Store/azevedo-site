@@ -1,67 +1,36 @@
-# azevedo-site
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Projeto Next.js 16 com React 19 e Prisma 6.
+## Getting Started
 
-## 🚀 Deploy Automático com Docker
-
-Este projeto está configurado com GitHub Actions para fazer deploy automático em um servidor VPS usando Docker.
-
-### Guias de Deploy
-
-- 📖 **[GUIA_RAPIDO.md](./GUIA_RAPIDO.md)** - Guia rápido para começar (RECOMENDADO)
-- 📚 **[DOCKER_DEPLOY.md](./DOCKER_DEPLOY.md)** - Documentação completa e detalhada
-- 🛠️ **setup-vps.sh** - Script automático de setup do VPS
-
-### Quick Start
-
-1. **No VPS**, execute o script de setup:
-   ```bash
-   wget https://raw.githubusercontent.com/DevGabLow/azevedo-site/main/setup-vps.sh
-   bash setup-vps.sh
-   ```
-
-2. **No GitHub**, configure os secrets (Settings → Secrets):
-   - `VPS_SSH_KEY` - Chave privada SSH
-   - `VPS_HOST` - IP do servidor
-   - `VPS_USER` - Usuário SSH
-   - `VPS_PATH` - Caminho do projeto
-   - `DATABASE_URL` - Connection string do banco
-
-3. **Push para main** e veja o deploy acontecer automaticamente! 🎉
-
-## 🏃 Desenvolvimento Local
+First, run the development server:
 
 ```bash
-# Instalar dependências
-npm install
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Edite .env com suas configurações
-
-# Gerar Prisma Client
-npx prisma generate
-
-# Executar em modo de desenvolvimento
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## 🐳 Docker
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Build local
-```bash
-docker build -t azevedo-site .
-docker run -p 3000:3000 -e DATABASE_URL="sua-connection-string" azevedo-site
-```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### Docker Compose
-```bash
-docker-compose up -d
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📦 Tecnologias
+## Learn More
 
-- Next.js 16
-- React 19
-- Prisma 6
-- Node.js 20
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

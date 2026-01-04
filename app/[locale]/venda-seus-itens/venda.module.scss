@@ -1,0 +1,33 @@
+.content {
+    display: flex;
+
+    &.d_center {
+        justify-content: center;
+    }
+
+    &.d_column {
+        flex-direction: column;
+    }
+
+    .desktop {
+        max-width: 1220px;
+    }
+
+    .mobile {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .content {
+        .desktop {
+            display: none;
+        }
+
+        .mobile {
+            display: block;
+            max-width: 390px;
+        }
+    }
+
+}

@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (max-width: 576px) {
+    .container {
+        position: relative;
+        display: block;
+        gap: 0px
+    }
+}

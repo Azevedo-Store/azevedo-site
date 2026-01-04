@@ -1,0 +1,264 @@
+@import url(./footer.css);
+
+
+
+
+
+
+.container_kks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    position: relative;
+    width: 80%;
+}
+
+.box {
+    position: relative;
+    padding: 10px;
+    text-align: center;
+    width: calc(25% - 20px);
+}
+
+.box img {
+    width: 100%;
+    height: auto;
+    background-color: transparent;
+}
+
+
+
+.button_top {
+    display: block;
+    position: absolute;
+    bottom: -10px;
+    left: 30%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    border: 2px solid var(--button_outline_color);
+    border-radius: var(--button_radius);
+    padding: 0.75em 1.5em;
+    background: var(--button_color);
+    color: var(--button_outline_color);
+    transform: translateY(-0.2em);
+    transition: transform 0.1s ease;
+}
+
+
+.btn_vd {
+    display: block;
+    padding: 15px;
+    box-sizing: border-box;
+    border: 2px solid var(--button_outline_color);
+    border-radius: var(--button_radius);
+    background: var(--button_color);
+    color: var(--button_outline_color);
+    transition: transform 0.1s ease;
+}
+
+
+
+
+.quit-mobile {
+    display: none;
+}
+
+.container-quit {
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+}
+
+.container_grupo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.link_grupo {
+    display: contents;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.img_grupo_desktop {
+    width: 60%;
+}
+
+.img_pag_mobile {
+    width: 80%;
+}
+
+.img_pag_desk {
+    width: 60%;
+}
+
+#desktop img,
+.img_grupo_mobile {
+    border-radius: 20px;
+}
+
+#mobile {
+    display: none;
+}
+
+.container_pag {
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+}
+
+.referencias {
+    margin-bottom: 12px;
+}
+
+.link_ref {
+    display: contents;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+
+@media (max-width: 600px) {
+    .priceRelative {
+        top: 70px;
+        left: 17%;
+        font-size: 15px;
+    }
+
+    .description-price {
+        bottom: 43px;
+        left: 50%;
+    }
+
+    .container {
+        row-gap: 30px;
+        column-gap: 10px;
+    }
+
+    .container_kks {
+        padding-top: 0px;
+        width: 100%;
+    }
+
+    .container_horario {
+        min-width: 200px;
+        width: 90%;
+    }
+
+    .text {
+        font-size: 14px;
+    }
+
+    .box {
+        width: calc(50% - 10px);
+    }
+
+    .banner {
+        width: 90%;
+    }
+
+
+    .whats {
+        right: 20px;
+    }
+
+    .img-whats {
+        width: 30px;
+        height: 30px;
+    }
+
+    .quit-mobile {
+        display: block;
+        margin-left: 1vh;
+        margin-right: 1vh;
+    }
+
+    .quit-desktop {
+        display: none;
+    }
+
+    #desktop {
+        display: none;
+    }
+
+    .img_grupo_mobile {
+        border-radius: 20px;
+    }
+
+    .grupo_mobile {
+        display: flex;
+        justify-content: center;
+        max-width: 90%;
+    }
+
+    #mobile {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+@media (max-width: 400px) {
+
+
+    .priceRelative {
+        font-size: 55% !important;
+        top: 25% !important;
+    }
+
+    .description-price {
+        bottom: 15% !important;
+        left: 50%;
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 500px) {
+
+
+    .priceRelative {
+        font-size: 60% !important;
+        top: 25% !important;
+    }
+
+    .description-price {
+        bottom: 15% !important;
+        left: 50%;
+        font-size: 14px !important;
+    }
+}
+
+
+@media (max-width: 1366px) {
+    .priceRelative {
+        top: 26%;
+        left: 17%;
+        font-size: 80%
+    }
+
+    .description-price {
+        bottom: 37px;
+        left: 50%;
+    }
+}
+
+@media (max-width: 1280px) {
+    .priceRelative {
+        top: 25%;
+        left: 17%;
+        font-size: 12px;
+    }
+
+    .description-price {
+        bottom: 35px;
+        left: 50%;
+    }
+}
