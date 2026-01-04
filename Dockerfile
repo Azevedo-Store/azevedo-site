@@ -35,15 +35,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copiar TODOS os arquivos de configuração necessários para o next-intl
-COPY --from=builder --chown=nextjs:nodejs /app/i18n.ts ./i18n.ts
-COPY --from=builder --chown=nextjs:nodejs /app/i18n.js ./i18n.js
+# Copiar apenas arquivos que existem (usando wildcards)
+COPY --from=builder --chown=nextjs:nodejs /app/i18n.* ./
 COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./next.config.js
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
-COPY --from=builder --chown=nextjs:nodejs /app/next-intl.config.js ./next-intl.config.js
-COPY --from=builder --chown=nextjs:nodejs /app/middleware.ts ./middleware.ts
-COPY --from=builder --chown=nextjs:nodejs /app/middleware.js ./middleware.js
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.* ./
+COPY --from=builder --chown=nextjs:nodejs /app/middleware.* ./
 
 # Para debug: listar arquivos copiados
 RUN ls -la /app/
