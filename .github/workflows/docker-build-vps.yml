@@ -130,12 +130,12 @@ jobs:
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
-            gunzip -c /tmp/azevedo-site.tar.gz | docker load
+            gunzip -c /tmp/azevedo-site.tar.gz | sudo docker load
             
             # Taguear para o registry local
             REGISTRY="$REGISTRY_HOST:$REGISTRY_PORT"
-            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:latest
-            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
+            sudo docker tag azevedo-site:latest \$REGISTRY/azevedo-site:latest
+            sudo docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Configurar registry como insecure (HTTP) se necessário
             REGISTRY_ADDR="$REGISTRY_HOST:$REGISTRY_PORT"
@@ -173,8 +173,8 @@ jobs:
             
             # Push para o registry
             echo "Pushing to registry \$REGISTRY..."
-            docker push \$REGISTRY/azevedo-site:latest
-            docker push \$REGISTRY/azevedo-site:$COMMIT_SHA
+            sudo docker push \$REGISTRY/azevedo-site:latest
+            sudo docker push \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Mover .env para o diretório do projeto
             mv /tmp/.env .env
@@ -182,7 +182,7 @@ jobs:
             # Limpar arquivos temporários e imagens não utilizadas
             rm -f /tmp/azevedo-site.tar.gz
             echo "Cleaning unused Docker images..."
-            docker image prune -af --filter "until=24h"
+            sudo docker image prune -af --filter "until=24h"
           EOF
       
       - name: Cleanup SSH
@@ -251,12 +251,12 @@ jobs:
             cd $VPS_PATH
             
             # Parar e remover container antigo
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
+            sudo docker stop $CONTAINER_NAME || true
+            sudo docker rm $CONTAINER_NAME || true
             
             # Pull da imagem do registry e executar novo container
-            docker pull \$REGISTRY/azevedo-site:latest
-            docker run -d \
+            sudo docker pull \$REGISTRY/azevedo-site:latest
+            sudo docker run -d \
               --name $CONTAINER_NAME \
               -p $PORT:3000 \
               --env-file .env \
@@ -265,7 +265,7 @@ jobs:
             
             # Executar migrations do Prisma
             echo "Running Prisma migrations..."
-            if docker exec $CONTAINER_NAME npx prisma migrate deploy; then
+            if sudo docker exec $CONTAINER_NAME npx prisma migrate deploy; then
               echo "✓ Migrations completed successfully"
             else
               echo "⚠ Warning: Migrations failed or no migrations to run"
@@ -278,7 +278,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           ENVIRONMENT: ${{ steps.env.outputs.environment }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "docker ps | grep azevedo-site-container"
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "sudo docker ps | grep azevedo-site-container"
       
       - name: Cleanup SSH
         if: always()
