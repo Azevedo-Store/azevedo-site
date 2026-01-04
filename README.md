@@ -10,6 +10,7 @@ Este projeto está configurado com GitHub Actions para fazer deploy automático 
 
 - 📖 **[GUIA_RAPIDO.md](./GUIA_RAPIDO.md)** - Guia rápido para começar (RECOMENDADO)
 - 📚 **[DOCKER_DEPLOY.md](./DOCKER_DEPLOY.md)** - Documentação completa e detalhada
+- 🔒 **[SECURITY_CONFIG.md](./SECURITY_CONFIG.md)** - Configuração de segurança para workflows e deploys
 - 🛠️ **setup-vps.sh** - Script automático de setup do VPS
 
 ### Quick Start
