@@ -65,17 +65,11 @@ jobs:
           
           # Selecionar secrets baseado no ambiente
           if [ "$ENV" == "DEV" ]; then
-            DATABASE_URL="${{ secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}"
-            NODE_ENV="development"
-            API_KEY="${{ secrets.API_KEY_DEV || secrets.API_KEY }}"
-            NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET_DEV || secrets.NEXTAUTH_SECRET }}"
-            NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL_DEV || secrets.NEXTAUTH_URL }}"
+            DATABASE_URL=${{ secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}
+            NODE_ENV=development        
           else
-            DATABASE_URL="${{ secrets.DATABASE_URL }}"
-            NODE_ENV="${{ secrets.NODE_ENV || 'production' }}"
-            API_KEY="${{ secrets.API_KEY }}"
-            NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
-            NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            NODE_ENV=${{ secrets.NODE_ENV || 'production' }}     
           fi
           
           cat > .env << ENVEOF
