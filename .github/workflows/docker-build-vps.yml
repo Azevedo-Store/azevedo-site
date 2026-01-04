@@ -196,27 +196,28 @@ jobs:
           REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
           ENVIRONMENT: ${{ steps.env.outputs.environment }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+          # Determinar container e porta com base no ambiente
+          if [ "$ENVIRONMENT" == "DEV" ]; then
+            CONTAINER_NAME="azevedo-site-container-dev"
+            PORT="3001"
+          else
+            CONTAINER_NAME="azevedo-site-container"
+            PORT="3000"
+          fi
+          
+          REGISTRY="${REGISTRY_HOST}:${REGISTRY_PORT}"
+          
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << EOF
             set -e
             
             # Navegar para o diretório do projeto
-            cd ${{ secrets.VPS_PATH }}
-            
-            # Definir nome do container baseado no ambiente
-            if [ "${{ env.ENVIRONMENT }}" == "DEV" ]; then
-              CONTAINER_NAME="azevedo-site-container-dev"
-              PORT="3001"
-            else
-              CONTAINER_NAME="azevedo-site-container"
-              PORT="3000"
-            fi
+            cd $VPS_PATH
             
             # Parar e remover container antigo
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
             
             # Pull da imagem do registry e executar novo container
-            REGISTRY="${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}:${{ secrets.REGISTRY_PORT || '5000' }}"
             docker pull $REGISTRY/azevedo-site:latest
             docker run -d \
               --name $CONTAINER_NAME \
@@ -238,13 +239,15 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          ENVIRONMENT: ${{ steps.env.outputs.environment }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
-            if [ "${{ steps.env.outputs.environment }}" == "DEV" ]; then
-              CONTAINER_NAME="azevedo-site-container-dev"
-            else
-              CONTAINER_NAME="azevedo-site-container"
-            fi
+          if [ "$ENVIRONMENT" == "DEV" ]; then
+            CONTAINER_NAME="azevedo-site-container-dev"
+          else
+            CONTAINER_NAME="azevedo-site-container"
+          fi
+          
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << EOF
             docker ps | grep $CONTAINER_NAME
           EOF
       
