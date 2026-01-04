@@ -120,29 +120,35 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
           REGISTRY_HOST: ${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}
           REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+          # Extrair nome da branch do ref
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          REGISTRY="${REGISTRY_HOST}:${REGISTRY_PORT}"
+          
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << EOF
             set -e
             
             # Navegar para o diretório do projeto e atualizar código
-            cd ${{ secrets.VPS_PATH }}
-            echo "Pulling latest code..."
+            cd $VPS_PATH
+            echo "Pulling latest code from branch: $BRANCH_NAME..."
             git fetch origin
-            git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
+            git checkout $BRANCH_NAME || git checkout -b $BRANCH_NAME origin/$BRANCH_NAME
+            git reset --hard origin/$BRANCH_NAME
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
             docker load < /tmp/azevedo-site.tar.gz
             
             # Taguear para o registry local
-            REGISTRY="${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}:${{ secrets.REGISTRY_PORT || '5000' }}"
             docker tag azevedo-site:latest $REGISTRY/azevedo-site:latest
-            docker tag azevedo-site:latest $REGISTRY/azevedo-site:${{ github.sha }}
+            docker tag azevedo-site:latest $REGISTRY/azevedo-site:$GITHUB_SHA
             
             # Push para o registry
             echo "Pushing to registry $REGISTRY..."
             docker push $REGISTRY/azevedo-site:latest
-            docker push $REGISTRY/azevedo-site:${{ github.sha }}
+            docker push $REGISTRY/azevedo-site:$GITHUB_SHA
             
             # Mover .env para o diretório do projeto
             mv /tmp/.env .env

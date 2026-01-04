@@ -61,8 +61,9 @@
 │  │                                                            │ │
 │  │  cd $VPS_PATH                                             │ │
 │  │    │                                                       │ │
-│  │    ├─► git fetch && git reset --hard origin/HEAD          │ │
-│  │    │   (sempre atualiza para versão mais nova)            │ │
+│  │    ├─► git checkout branch-selecionada                    │ │
+│  │    ├─► git fetch && git reset --hard origin/branch        │ │
+│  │    │   (sempre atualiza para a branch da Action)          │ │
 │  │    │                                                       │ │
 │  │    ├─► docker load < /tmp/azevedo-site.tar.gz             │ │
 │  │    │                                                       │ │
@@ -203,7 +204,8 @@ MODOS DE EXECUÇÃO:
 
 FUNCIONALIDADES:
 
-  ✓ Sempre faz git pull da versão mais nova no VPS
+  ✓ Usa a branch selecionada na Action para build e deploy
+  ✓ Sempre faz git checkout e pull da branch específica no VPS
   ✓ Sempre faz push para o Registry local no VPS
   ✓ Sempre limpa imagens Docker não utilizadas (>24h)
   ✓ Suporta múltiplos ambientes (DEV/PRD)

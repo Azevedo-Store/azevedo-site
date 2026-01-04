@@ -138,7 +138,8 @@ O workflow está dividido em 2 jobs:
 5. **Build Docker Image**: Builda a imagem Docker no GitHub Actions
 6. **Save and Transfer**: Transfere imagem e .env para o VPS via SCP
 7. **Load Image and Push to Registry**: 
-   - Atualiza código no VPS (`git pull` da versão mais nova)
+   - Atualiza código no VPS fazendo checkout da branch selecionada na Action
+   - Faz `git pull` da versão mais nova da branch específica
    - Carrega a imagem no Docker do VPS
    - Tagueia e faz push para o registry local
    - Move .env para o diretório do projeto
