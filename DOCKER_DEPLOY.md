@@ -95,33 +95,72 @@ Os seguintes secrets são opcionais e serão adicionados ao `.env` apenas se con
 
 **Nota:** O workflow cria automaticamente um arquivo `.env` no VPS a partir desses secrets durante o deploy.
 
+#### Secrets Específicos de Ambiente (Opcionais):
+
+Para suportar múltiplos ambientes (DEV/PRD), você pode configurar secrets específicos:
+
+- **`DATABASE_URL_DEV`**: URL do banco de dados para ambiente DEV
+- **`API_KEY_DEV`**: API Key para ambiente DEV  
+- **`NEXTAUTH_SECRET_DEV`**: NextAuth secret para ambiente DEV
+- **`NEXTAUTH_URL_DEV`**: NextAuth URL para ambiente DEV
+
+**Nota:** Se os secrets específicos de DEV não forem configurados, o workflow usará os secrets de produção como fallback.
+
 ## 🚀 Como funciona o Workflow
 
 O GitHub Action é acionado automaticamente quando:
-- Há um push para a branch `main` ou `master`
-- Há um pull request para `main` ou `master`
-- É executado manualmente através da interface do GitHub
+- Há um push para a branch `main` ou `master` (modo: build-and-deploy, ambiente: PRD)
+- Há um pull request para `main` ou `master` (modo: build-and-deploy, ambiente: PRD)
+- É executado manualmente através da interface do GitHub com opções personalizáveis
 
-### Passos do workflow:
+### Execução Manual
+
+Ao executar manualmente, você pode escolher:
+
+1. **Tipo de Ação**:
+   - `build-and-deploy` (padrão): Faz build E deploy
+   - `build-only`: Apenas build e push para registry (sem deploy)
+
+2. **Ambiente**:
+   - `PRD` (padrão): Produção (porta 3000, container: azevedo-site-container)
+   - `DEV`: Desenvolvimento (porta 3001, container: azevedo-site-container-dev)
+
+### Estrutura do Workflow
+
+O workflow está dividido em 2 jobs:
+
+#### Job 1: Build (sempre executado)
 
 1. **Checkout**: Baixa o código do repositório
 2. **Setup SSH**: Configura a conexão SSH com o VPS
-3. **Create .env**: Cria arquivo `.env` localmente usando secrets do GitHub
-4. **Build Docker Image**: Builda a imagem Docker no GitHub Actions
-5. **Save and Transfer**: 
-   - Salva a imagem como tarball compactado
-   - Transfere imagem e .env para o VPS via SCP
-6. **Deploy on VPS**: 
+3. **Determine environment**: Define ambiente (DEV ou PRD) baseado no input
+4. **Create .env**: Cria arquivo `.env` com secrets apropriados para o ambiente
+5. **Build Docker Image**: Builda a imagem Docker no GitHub Actions
+6. **Save and Transfer**: Transfere imagem e .env para o VPS via SCP
+7. **Load Image and Push to Registry**: 
+   - Atualiza código no VPS fazendo checkout da branch selecionada na Action
+   - Faz `git pull` da versão mais nova da branch específica
    - Carrega a imagem no Docker do VPS
    - Tagueia e faz push para o registry local
    - Move .env para o diretório do projeto
+   - Limpa arquivos temporários e imagens não utilizadas (mais de 24h)
+8. **Cleanup**: Remove arquivos SSH temporários
+
+#### Job 2: Deploy (condicional)
+
+Executado apenas se:
+- For push/PR automático OU
+- For execução manual com action_type = 'build-and-deploy'
+
+1. **Setup SSH**: Configura a conexão SSH com o VPS
+2. **Determine environment**: Define ambiente (DEV ou PRD)
+3. **Deploy on VPS**: 
    - Para e remove o container antigo
    - Faz pull da imagem do registry
-   - Inicia novo container usando `--env-file .env`
+   - Inicia novo container com porta e nome baseados no ambiente
    - Executa migrations do Prisma
-   - Limpa arquivos temporários e imagens antigas
-7. **Verify**: Verifica se o container está rodando
-8. **Cleanup**: Remove arquivos SSH temporários
+4. **Verify**: Verifica se o container está rodando
+5. **Cleanup**: Remove arquivos SSH temporários
 
 ## 📦 Preparando o VPS
 
@@ -244,7 +283,21 @@ Você pode testar o workflow manualmente:
 1. Vá para **Actions** no GitHub
 2. Selecione **Build Docker on VPS**
 3. Clique em **Run workflow**
-4. Selecione a branch e clique em **Run workflow**
+4. Selecione a branch desejada
+5. Escolha as opções:
+   - **Tipo de ação**: 
+     - `build-and-deploy`: Faz build e deploy completo
+     - `build-only`: Apenas build e push para registry (sem deploy)
+   - **Ambiente**: 
+     - `PRD`: Produção (porta 3000)
+     - `DEV`: Desenvolvimento (porta 3001)
+6. Clique em **Run workflow**
+
+### Exemplos de Uso
+
+- **Build e Deploy em Produção**: action_type=`build-and-deploy`, environment=`PRD`
+- **Build e Deploy em Desenvolvimento**: action_type=`build-and-deploy`, environment=`DEV`
+- **Apenas Build (sem deploy)**: action_type=`build-only`, environment=`PRD` ou `DEV`
 
 ## 🐛 Solução de Problemas
 
