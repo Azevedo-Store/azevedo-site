@@ -29,7 +29,7 @@ services:
     environment:
       - POSTGRES_DB=azevedo_prod
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     restart: always
