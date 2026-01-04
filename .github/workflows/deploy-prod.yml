@@ -30,6 +30,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           API_KEY: ${{ secrets.API_KEY }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
       - name: Wait for services to be ready
         run: |
