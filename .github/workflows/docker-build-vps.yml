@@ -260,13 +260,13 @@ jobs:
             fi
             
             # Pull da imagem do registry e executar novo container
-            sudo docker pull \$REGISTRY/azevedo-site:latest
+            sudo docker pull $REGISTRY/azevedo-site:latest
             sudo docker run -d \
               --name $CONTAINER_NAME \
               -p $PORT:3000 \
               --env-file .env \
               --restart unless-stopped \
-              \$REGISTRY/azevedo-site:latest
+              $REGISTRY/azevedo-site:latest
             
             # Executar migrations do Prisma
             echo "Running Prisma migrations..."
