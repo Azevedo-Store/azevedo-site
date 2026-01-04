@@ -130,7 +130,7 @@ jobs:
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
-            docker load < /tmp/azevedo-site.tar.gz
+            gunzip -c /tmp/azevedo-site.tar.gz | docker load
             
             # Taguear para o registry local
             REGISTRY="$REGISTRY_HOST:$REGISTRY_PORT"
