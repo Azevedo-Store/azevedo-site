@@ -31,6 +31,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
+# Copiar arquivos de configuração necessários para next-intl
+COPY --from=builder --chown=nextjs:nodejs /app/i18n* ./
+COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
+COPY --from=builder --chown=nextjs:nodejs /app/next*.config.* ./
+COPY --from=builder --chown=nextjs:nodejs /app/middleware* ./
+
 USER nextjs
 
 EXPOSE 3000
