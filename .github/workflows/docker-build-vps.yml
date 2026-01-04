@@ -149,6 +149,7 @@ jobs:
               # Configurar registry como insecure usando jq
               if [ -f /etc/docker/daemon.json ]; then
                 sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+                # Add registry to insecure-registries array, creating array if needed, ensuring uniqueness
                 sudo jq --arg registry "$REGISTRY_ADDR" \
                   'if .["insecure-registries"] then .["insecure-registries"] |= (. + [$registry] | unique) else .["insecure-registries"] = [$registry] end' \
                   /etc/docker/daemon.json > /tmp/daemon.json.tmp
