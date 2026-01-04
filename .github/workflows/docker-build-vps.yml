@@ -78,26 +78,91 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
           REGISTRY_HOST: ${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}
           REGISTRY_PORT: ${{ secrets.REGISTRY_PORT || '5000' }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "bash -s" << EOF
             set -e
             
             # Navegar para o diretório do projeto
-            cd ${{ secrets.VPS_PATH }}
+            cd "$VPS_PATH"
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
             docker load < /tmp/azevedo-site.tar.gz
             
             # Taguear para o registry local
-            REGISTRY="${{ secrets.REGISTRY_HOST || secrets.VPS_HOST }}:${{ secrets.REGISTRY_PORT || '5000' }}"
-            docker tag azevedo-site:latest $REGISTRY/azevedo-site:latest
-            docker tag azevedo-site:latest $REGISTRY/azevedo-site:${{ github.sha }}
+            REGISTRY="$REGISTRY_HOST:$REGISTRY_PORT"
+            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:latest
+            docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
+            
+            # Configurar registry como insecure (HTTP) se necessário
+            REGISTRY_ADDR="$REGISTRY_HOST:$REGISTRY_PORT"
+            
+            # Verificar se já está configurado
+            if [ -f /etc/docker/daemon.json ] && grep -q "\"$REGISTRY_ADDR\"" /etc/docker/daemon.json 2>/dev/null; then
+              echo "Registry $REGISTRY_ADDR already configured as insecure"
+            else
+              echo "Configuring Docker to allow insecure registry $REGISTRY_ADDR..."
+              
+              # Usar Python para manipular JSON de forma segura
+              sudo python3 -c "
+import json
+import os
+import sys
+
+daemon_json_path = '/etc/docker/daemon.json'
+config = {}
+
+try:
+    # Ler configuração existente se houver
+    if os.path.exists(daemon_json_path):
+        with open(daemon_json_path, 'r') as f:
+            config = json.load(f)
+        # Fazer backup
+        with open(daemon_json_path + '.bak', 'w') as f:
+            json.dump(config, f, indent=2)
+    
+    # Adicionar registry à lista de insecure-registries
+    if 'insecure-registries' not in config:
+        config['insecure-registries'] = []
+    
+    if '$REGISTRY_ADDR' not in config['insecure-registries']:
+        config['insecure-registries'].append('$REGISTRY_ADDR')
+    
+    # Salvar configuração
+    os.makedirs(os.path.dirname(daemon_json_path), exist_ok=True)
+    with open(daemon_json_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    print('Successfully configured insecure registry')
+except json.JSONDecodeError as e:
+    print(f'Error: Invalid JSON in {daemon_json_path}: {e}', file=sys.stderr)
+    print('Creating new daemon.json with default configuration', file=sys.stderr)
+    config = {'insecure-registries': ['$REGISTRY_ADDR']}
+    with open(daemon_json_path, 'w') as f:
+        json.dump(config, f, indent=2)
+except Exception as e:
+    print(f'Error configuring Docker daemon: {e}', file=sys.stderr)
+    sys.exit(1)
+"
+              
+              # Reiniciar Docker
+              echo "Restarting Docker daemon..."
+              if sudo systemctl restart docker 2>/dev/null; then
+                echo "Docker restarted successfully using systemctl"
+              elif sudo service docker restart 2>/dev/null; then
+                echo "Docker restarted successfully using service"
+              else
+                echo "Warning: Failed to restart Docker. Please restart manually." >&2
+              fi
+              echo "Waiting for Docker to be ready..."
+              sleep 5
+            fi
             
             # Push para o registry
-            echo "Pushing to registry $REGISTRY..."
-            docker push $REGISTRY/azevedo-site:latest
-            docker push $REGISTRY/azevedo-site:${{ github.sha }}
+            echo "Pushing to registry \$REGISTRY..."
+            docker push \$REGISTRY/azevedo-site:latest
+            docker push \$REGISTRY/azevedo-site:$COMMIT_SHA
             
             # Mover .env para o diretório do projeto
             mv /tmp/.env .env
@@ -107,13 +172,13 @@ jobs:
             docker rm azevedo-site-container || true
             
             # Pull da imagem do registry e executar novo container
-            docker pull $REGISTRY/azevedo-site:latest
+            docker pull \$REGISTRY/azevedo-site:latest
             docker run -d \
               --name azevedo-site-container \
               -p 3000:3000 \
               --env-file .env \
               --restart unless-stopped \
-              $REGISTRY/azevedo-site:latest
+              \$REGISTRY/azevedo-site:latest
             
             # Executar migrations do Prisma
             echo "Running Prisma migrations..."
@@ -133,9 +198,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST << 'EOF'
-            docker ps | grep azevedo-site-container
-          EOF
+          ssh -i ~/.ssh/id_rsa $VPS_USER@$VPS_HOST "docker ps | grep azevedo-site-container"
       
       - name: Cleanup SSH
         if: always()
