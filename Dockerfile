@@ -26,16 +26,27 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+
+# Copiar o standalone server
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copiar dependências necessárias
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copiar arquivos de configuração necessários para next-intl
-COPY --from=builder --chown=nextjs:nodejs /app/i18n* ./
+# Copiar TODOS os arquivos de configuração necessários para o next-intl
+COPY --from=builder --chown=nextjs:nodejs /app/i18n.ts ./i18n.ts
+COPY --from=builder --chown=nextjs:nodejs /app/i18n.js ./i18n.js
 COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
-COPY --from=builder --chown=nextjs:nodejs /app/next*.config.* ./
-COPY --from=builder --chown=nextjs:nodejs /app/middleware* ./
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.js ./next.config.js
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/next-intl.config.js ./next-intl.config.js
+COPY --from=builder --chown=nextjs:nodejs /app/middleware.ts ./middleware.ts
+COPY --from=builder --chown=nextjs:nodejs /app/middleware.js ./middleware.js
+
+# Para debug: listar arquivos copiados
+RUN ls -la /app/
 
 USER nextjs
 
