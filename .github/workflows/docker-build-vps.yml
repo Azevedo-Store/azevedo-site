@@ -94,7 +94,14 @@ jobs:
       
       - name: Build Docker Image
         run: |
-          docker build -t azevedo-site:${{ github.sha }} -t azevedo-site:latest .
+          if [ "$ENVIRONMENT" == "DEV" ]; then
+            CONTAINER_NAME="azevedo-site-dev"
+            PORT="3001"
+          else
+            CONTAINER_NAME="azevedo-site"
+            PORT="3000"
+          fi
+          docker build -t $CONTAINER_NAME:${{ github.sha }} -t $CONTAINER_NAME:latest .
       
       - name: Save and Transfer Docker Image to VPS
         env:
@@ -102,10 +109,10 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           # Criar tarball da imagem
-          docker save azevedo-site:latest | gzip > azevedo-site.tar.gz
+          docker save $CONTAINER_NAME:latest | gzip > $CONTAINER_NAME.tar.gz
           
           # Transferir imagem e .env para o VPS
-          scp -i ~/.ssh/id_rsa azevedo-site.tar.gz $VPS_USER@$VPS_HOST:/tmp/
+          scp -i ~/.ssh/id_rsa $CONTAINER_NAME.tar.gz $VPS_USER@$VPS_HOST:/tmp/
           scp -i ~/.ssh/id_rsa .env $VPS_USER@$VPS_HOST:/tmp/
       
       - name: Load Image and Push to Registry on VPS
@@ -125,57 +132,57 @@ jobs:
             
             # Carregar a imagem do tarball
             echo "Loading Docker image..."
-            gunzip -c /tmp/azevedo-site.tar.gz | sudo docker load
+            gunzip -c /tmp/$CONTAINER_NAME.tar.gz | sudo docker load
             
             # Taguear para o registry local
             REGISTRY="$REGISTRY_HOST:$REGISTRY_PORT"
-            sudo docker tag azevedo-site:latest \$REGISTRY/azevedo-site:latest
-            sudo docker tag azevedo-site:latest \$REGISTRY/azevedo-site:$COMMIT_SHA
+            sudo docker tag $CONTAINER_NAME:latest \$REGISTRY/$CONTAINER_NAME:latest
+            sudo docker tag $CONTAINER_NAME:latest \$REGISTRY/$CONTAINER_NAME:$COMMIT_SHA
             
-            # Configurar registry como insecure (HTTP) se necessário
-            REGISTRY_ADDR="$REGISTRY_HOST:$REGISTRY_PORT"
+            # # Configurar registry como insecure (HTTP) se necessário
+            # REGISTRY_ADDR="$REGISTRY_HOST:$REGISTRY_PORT"
             
-            # Verificar se já está configurado
-            if [ -f /etc/docker/daemon.json ] && grep -q "\"$REGISTRY_ADDR\"" /etc/docker/daemon.json 2>/dev/null; then
-              echo "Registry $REGISTRY_ADDR already configured as insecure"
-            else
-              echo "Configuring Docker to allow insecure registry $REGISTRY_ADDR..."
+            # # Verificar se já está configurado
+            # if [ -f /etc/docker/daemon.json ] && grep -q "\"$REGISTRY_ADDR\"" /etc/docker/daemon.json 2>/dev/null; then
+            #   echo "Registry $REGISTRY_ADDR already configured as insecure"
+            # else
+            #   echo "Configuring Docker to allow insecure registry $REGISTRY_ADDR..."
               
-              # Configurar registry como insecure usando jq
-              if [ -f /etc/docker/daemon.json ]; then
-                sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
-                # Add registry to insecure-registries array, creating array if needed, ensuring uniqueness
-                sudo jq --arg registry "$REGISTRY_ADDR" \
-                  'if .["insecure-registries"] then .["insecure-registries"] |= (. + [$registry] | unique) else .["insecure-registries"] = [$registry] end' \
-                  /etc/docker/daemon.json > /tmp/daemon.json.tmp
-                sudo mv /tmp/daemon.json.tmp /etc/docker/daemon.json
-              else
-                echo "{\"insecure-registries\":[\"$REGISTRY_ADDR\"]}" | sudo tee /etc/docker/daemon.json > /dev/null
-              fi
+            #   # Configurar registry como insecure usando jq
+            #   if [ -f /etc/docker/daemon.json ]; then
+            #     sudo cp /etc/docker/daemon.json /etc/docker/daemon.json.bak
+            #     # Add registry to insecure-registries array, creating array if needed, ensuring uniqueness
+            #     sudo jq --arg registry "$REGISTRY_ADDR" \
+            #       'if .["insecure-registries"] then .["insecure-registries"] |= (. + [$registry] | unique) else .["insecure-registries"] = [$registry] end' \
+            #       /etc/docker/daemon.json > /tmp/daemon.json.tmp
+            #     sudo mv /tmp/daemon.json.tmp /etc/docker/daemon.json
+            #   else
+            #     echo "{\"insecure-registries\":[\"$REGISTRY_ADDR\"]}" | sudo tee /etc/docker/daemon.json > /dev/null
+            #   fi
               
-              # Reiniciar Docker
-              echo "Restarting Docker daemon..."
-              if sudo systemctl restart docker 2>/dev/null; then
-                echo "Docker restarted successfully using systemctl"
-              elif sudo service docker restart 2>/dev/null; then
-                echo "Docker restarted successfully using service"
-              else
-                echo "Warning: Failed to restart Docker. Please restart manually." >&2
-              fi
-              echo "Waiting for Docker to be ready..."
-              sleep 5
-            fi
+            #   # Reiniciar Docker
+            #   echo "Restarting Docker daemon..."
+            #   if sudo systemctl restart docker 2>/dev/null; then
+            #     echo "Docker restarted successfully using systemctl"
+            #   elif sudo service docker restart 2>/dev/null; then
+            #     echo "Docker restarted successfully using service"
+            #   else
+            #     echo "Warning: Failed to restart Docker. Please restart manually." >&2
+            #   fi
+            #   echo "Waiting for Docker to be ready..."
+            #   sleep 5
+            # fi
             
             # Push para o registry
             echo "Pushing to registry \$REGISTRY..."
-            sudo docker push \$REGISTRY/azevedo-site:latest
-            sudo docker push \$REGISTRY/azevedo-site:$COMMIT_SHA
+            sudo docker push \$REGISTRY/$CONTAINER_NAME:latest
+            sudo docker push \$REGISTRY/$CONTAINER_NAME:$COMMIT_SHA
             
             # Mover .env para o diretório do projeto
             mv /tmp/.env .env
             
             # Limpar arquivos temporários e imagens não utilizadas
-            rm -f /tmp/azevedo-site.tar.gz
+            rm -f /tmp/$CONTAINER_NAME.tar.gz
             echo "Cleaning unused Docker images..."
             sudo docker image prune -af --filter "until=24h"
           EOF
@@ -243,32 +250,68 @@ jobs:
             set -e
             
             # Navegar para o diretório do projeto
-            cd $VPS_PATH
-            
-            # Parar e remover container antigo (se existir)
-            if sudo docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}\\$"; then
-              echo "Stopping existing container: $CONTAINER_NAME"
-              sudo docker stop $CONTAINER_NAME || true
-              sudo docker rm $CONTAINER_NAME || true
+            if [ "$ENVIRONMENT" == "DEV" ]; then
+              cd $VPS_PATH/dev
             else
-              echo "No existing container found: $CONTAINER_NAME"
+               cd $VPS_PATH
+            fi
+           
+            
+            # Parar containers usando docker-compose
+            if [ -f docker-compose.yml ] || [ -f docker-compose.yaml ]; then
+              echo "Stopping containers with docker-compose..."
+              sudo docker-compose down || true
+            else
+              echo "No docker-compose file found, stopping containers manually..."
+              if sudo docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}\\$"; then
+                echo "Stopping existing container: $CONTAINER_NAME"
+                sudo docker stop $CONTAINER_NAME || true
+                sudo docker rm $CONTAINER_NAME || true
+              fi
             fi
             
-            # Pull da imagem do registry e executar novo container
+            # Pull da imagem do registry
+            echo "Pulling latest image from registry..."
             sudo docker pull $REGISTRY/azevedo-site:latest
-            sudo docker run -d \
-              --name $CONTAINER_NAME \
-              -p $PORT:3000 \
-              --env-file .env \
-              --restart unless-stopped \
-              $REGISTRY/azevedo-site:latest
             
-            # Executar migrations do Prisma
-            echo "Running Prisma migrations..."
-            if sudo docker exec $CONTAINER_NAME npx prisma migrate deploy; then
-              echo "✓ Migrations completed successfully"
+            # Definir variáveis de ambiente para o docker-compose
+            export CONTAINER_NAME=$CONTAINER_NAME
+            export PORT=$PORT
+            export IMAGE_TAG=latest
+            export REGISTRY=$REGISTRY
+            
+            # Executar usando docker-compose
+            if [ -f docker-compose.yml ] || [ -f docker-compose.yaml ]; then
+              echo "Starting containers with docker-compose..."
+              sudo -E docker-compose up -d
+              
+              # Aguardar o container ficar disponível
+              echo "Waiting for containers to be ready..."
+              sleep 10
+              
+              # Executar migrations do Prisma via docker-compose
+              echo "Running Prisma migrations..."
+              if sudo docker-compose exec -T web npx prisma migrate deploy; then
+                echo "✓ Migrations completed successfully"
+              else
+                echo "⚠ Warning: Migrations failed or no migrations to run"
+              fi
             else
-              echo "⚠ Warning: Migrations failed or no migrations to run"
+              echo "No docker-compose file found, falling back to manual container creation..."
+              sudo docker run -d \
+                --name $CONTAINER_NAME \
+                -p $PORT:3000 \
+                --env-file .env \
+                --restart unless-stopped \
+                $REGISTRY/azevedo-site:latest
+              
+              # Executar migrations do Prisma
+              echo "Running Prisma migrations..."
+              if sudo docker exec $CONTAINER_NAME npx prisma migrate deploy; then
+                echo "✓ Migrations completed successfully"
+              else
+                echo "⚠ Warning: Migrations failed or no migrations to run"
+              fi
             fi
           EOF
       
